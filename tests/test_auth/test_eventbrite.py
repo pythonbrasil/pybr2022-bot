@@ -1,5 +1,6 @@
 import json
 from asyncio import iscoroutine
+from pathlib import Path
 from unittest import mock
 
 import httpx
@@ -11,12 +12,17 @@ from pybr2022.auth.models import Attendee
 BASE_DIR = "pybr2022.auth.eventbrite"
 
 
+@pytest.fixture
+def datadir(request):
+    return request.config.rootpath / "tests" / "data"
+
+
 def _cancel_coroutines(tasks):
     for task in tasks:
         task.close()
 
 
-def test_list_attendees_params():
+def test_list_attendees_params(datadir):
     eventbrite = EventBrite("event-id", "api-token")
     expected_params = {
         "token": "api-token",
@@ -67,8 +73,8 @@ async def test_list_attendees_exception(httpx_mock):
 
 
 @pytest.mark.asyncio
-async def test_list_attendees_no_attendees(httpx_mock, shared_datadir):
-    data = json.loads((shared_datadir / "event_no_attendees.json").read_text())
+async def test_list_attendees_no_attendees(httpx_mock, datadir):
+    data = json.loads((datadir / "event_no_attendees.json").read_text())
     httpx_mock.add_response(json=data)
     eventbrite = EventBrite("event-id", "api-token")
     attendees = await eventbrite.list_attendees()
@@ -77,8 +83,8 @@ async def test_list_attendees_no_attendees(httpx_mock, shared_datadir):
 
 
 @pytest.mark.asyncio
-async def test_list_attendees_single_page(httpx_mock, shared_datadir):
-    data = json.loads((shared_datadir / "event_attendees_single_page.json").read_text())
+async def test_list_attendees_single_page(httpx_mock, datadir):
+    data = json.loads((datadir / "event_attendees_single_page.json").read_text())
     httpx_mock.add_response(json=data)
     eventbrite = EventBrite("event-id", "api-token")
     attendees = await eventbrite.list_attendees()
@@ -94,10 +100,10 @@ async def test_list_attendees_single_page(httpx_mock, shared_datadir):
 
 
 @pytest.mark.asyncio
-async def test_list_attendees_multiple_pages(httpx_mock, shared_datadir):
-    data = json.loads((shared_datadir / "event_attendees_first_page.json").read_text())
+async def test_list_attendees_multiple_pages(httpx_mock, datadir):
+    data = json.loads((datadir / "event_attendees_first_page.json").read_text())
     httpx_mock.add_response(json=data)
-    data = json.loads((shared_datadir / "event_attendees_second_page.json").read_text())
+    data = json.loads((datadir / "event_attendees_second_page.json").read_text())
     httpx_mock.add_response(json=data)
     eventbrite = EventBrite("event-id", "api-token")
     attendees = await eventbrite.list_attendees()

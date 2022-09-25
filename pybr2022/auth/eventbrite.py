@@ -99,6 +99,4 @@ class EventBrite:
                 attendees.extend(
                     await self._list_all_attendees(client, next_page, last_page)
                 )
-            # get all attendees
-            # filter
             return [Attendee.deserialize(attendee) for attendee in attendees]

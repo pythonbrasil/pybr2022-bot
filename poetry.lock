@@ -577,17 +577,6 @@ pytest = ">=4.6"
 testing = ["virtualenv", "pytest-xdist", "six", "process-tests", "hunter", "fields"]
 
 [[package]]
-name = "pytest-datadir"
-version = "1.3.1"
-description = "pytest plugin for test data directories and files"
-category = "dev"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-
-[package.dependencies]
-pytest = ">=2.7.0"
-
-[[package]]
 name = "pytest-httpx"
 version = "0.21.0"
 description = "Send responses to httpx."
@@ -709,7 +698,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "fdf431b527fda4dd07aadeec7b51563970fa1191dd4d71a4e6fd443aaa353bce"
+content-hash = "801b40d76429a5332ba406a202477e5018bcde86a543f0be27a2e4776e533aaa"
 
 [metadata.files]
 aiohttp = []
@@ -884,7 +873,6 @@ pyparsing = [
 pytest = []
 pytest-asyncio = []
 pytest-cov = []
-pytest-datadir = []
 pytest-httpx = []
 rfc3986 = [
     {file = "rfc3986-1.5.0-py2.py3-none-any.whl", hash = "sha256:a86d6e1f5b1dc238b218b012df0aa79409667bb209e58da56d0b94704e712a97"},

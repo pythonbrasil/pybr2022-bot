@@ -1,5 +1,6 @@
 import json
 from asyncio import iscoroutine
+from datetime import datetime
 from pathlib import Path
 from unittest import mock
 
@@ -39,6 +40,20 @@ def test_list_attendees_params_next_page():
         "continuation": "eyJwYWdlIjogMn0=",
     }
     assert eventbrite._list_attendees_params(page=2) == expected_params
+
+
+def test_list_attendees_params_changed_since():
+    eventbrite = EventBrite("event-id", "api-token")
+    expected_params = {
+        "token": "api-token",
+        "status": "attending",
+        "changed_since": "2002-06-30T00:00:00Z",
+    }
+    changed_since = datetime(2002, 6, 30)
+    assert (
+        eventbrite._list_attendees_params(changed_since=changed_since)
+        == expected_params
+    )
 
 
 @mock.patch(f"{BASE_DIR}.EventBrite._get_client", mock.Mock())

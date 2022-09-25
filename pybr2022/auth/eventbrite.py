@@ -1,6 +1,8 @@
 import asyncio
 import json
 from base64 import b64encode
+from datetime import datetime
+from optparse import Option
 from typing import Optional
 
 from httpx import AsyncClient, HTTPError
@@ -37,11 +39,7 @@ class EventBrite:
 
         return response.json()
 
-    async def _list_attendees(
-        self, client: AsyncClient, params: Optional[dict] = None
-    ) -> dict:
-        if not params:
-            params = self._list_attendees_params()
+    async def _list_attendees(self, client: AsyncClient, params: dict) -> dict:
 
         url = self._build_attendees_endpoint()
         response = await self._request(client, url, params)
@@ -53,7 +51,9 @@ class EventBrite:
         )
         return response
 
-    def _list_attendees_params(self, page: Optional[int] = None):
+    def _list_attendees_params(
+        self, page: Optional[int] = None, changed_since: Optional[datetime] = None
+    ) -> dict:
         params = {
             "token": self.api_token,
             "status": "attending",
@@ -62,6 +62,9 @@ class EventBrite:
             next_page = json.dumps({"page": page})
             next_page = b64encode(next_page.encode("utf-8")).decode("utf-8")
             params["continuation"] = next_page
+
+        if changed_since:
+            params["changed_since"] = changed_since.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         return params
 
@@ -86,11 +89,12 @@ class EventBrite:
         results = await asyncio.gather(*tasks)
         return [attendees for result in results for attendees in result["attendees"]]
 
-    async def list_attendees(self) -> list[Attendee]:
-        # TODO: check updated_at
-        # TODO: check cache
+    async def list_attendees(
+        self, changed_since: Optional[datetime] = None
+    ) -> list[Attendee]:
         async with self._get_client() as client:
-            response = await self._list_attendees(client)
+            params = self._list_attendees_params(changed_since=changed_since)
+            response = await self._list_attendees(client, params)
             attendees = response.get("attendees", [])
 
             if response["pagination"]["has_more_items"]:

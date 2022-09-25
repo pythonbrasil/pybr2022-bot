@@ -1,0 +1,26 @@
+{
+    "pagination": {
+        "object_count": 2,
+        "page_number": 1,
+        "page_count": 1,
+        "has_more_items": false
+    },
+    "attendees": [
+        {
+            "order_id": "order-id-1",
+            "profile": {
+                "first_name": "Attendee",
+                "last_name": "1",
+                "email": "attendee-1@email.com"
+            }
+        },
+        {
+            "order_id": "order-id-2",
+            "profile": {
+                "first_name": "Attendee",
+                "last_name": "2",
+                "email": "attendee-2@email.com"
+            }
+        }
+    ]
+}

@@ -1,0 +1,9 @@
+{
+    "pagination": {
+        "object_count": 0,
+        "page_number": 1,
+        "page_count": 1,
+        "has_more_items": false
+    },
+    "attendees": []
+}

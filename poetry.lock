@@ -121,7 +121,7 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "certifi"
-version = "2022.9.14"
+version = "2022.9.24"
 description = "Python package for providing Mozilla's CA Bundle."
 category = "main"
 optional = false
@@ -159,7 +159,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "coverage"
-version = "6.4.4"
+version = "6.5.0"
 description = "Code coverage measurement for Python"
 category = "dev"
 optional = false
@@ -198,11 +198,14 @@ docs = ["typing-extensions (>=4.3,<5)", "sphinxcontrib-websupport", "sphinxcontr
 
 [[package]]
 name = "executing"
-version = "1.0.0"
+version = "1.1.0"
 description = "Get the currently executing AST node of a frame, and other information"
 category = "dev"
 optional = false
 python-versions = "*"
+
+[package.extras]
+tests = ["rich", "littleutils", "pytest", "asttokens"]
 
 [[package]]
 name = "factory-boy"
@@ -668,7 +671,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "stack-data"
-version = "0.5.0"
+version = "0.5.1"
 description = "Extract data from python stack frames and tracebacks for informative displays"
 category = "dev"
 optional = false
@@ -742,8 +745,8 @@ multidict = ">=4.0"
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.10"
-content-hash = "11da905747a4145ca28a59f86301b6e6cce6d7947b9eab837ac9addee183e7a7"
+python-versions = "3.10.7"
+content-hash = "d54a171b0eefa126ec97a5013ee1e6e418fbc07ee45ff7a1836b9b87e7d112c1"
 
 [metadata.files]
 aiohttp = []

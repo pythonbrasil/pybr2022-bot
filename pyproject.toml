@@ -5,7 +5,7 @@ description = ""
 authors = ["Marco Rougeth <rougeth@users.noreply.github.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "3.10.7"
 "discord.py" = "^2.0.1"
 httpx = "^0.23.0"
 loguru = "^0.6.0"

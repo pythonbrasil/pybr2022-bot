@@ -2,7 +2,6 @@ import asyncio
 import json
 from base64 import b64encode
 from datetime import datetime
-from optparse import Option
 from typing import Optional
 
 from httpx import AsyncClient, HTTPError
@@ -103,4 +102,4 @@ class EventBrite:
                 attendees.extend(
                     await self._list_all_attendees(client, next_page, last_page)
                 )
-            return [Attendee.deserialize(attendee) for attendee in attendees]
+            return [Attendee.from_eventbrite(attendee) for attendee in attendees]

@@ -8,16 +8,17 @@ from pybr2022.auth.index import AttendeesIndex
 
 
 async def setup(bot: Bot):
-    logger.info("Bot setup")
+    guild = await bot.fetch_guild(config.DISCORD_SERVER_ID)
+
     eventbrite = EventBrite(config.EVENTBRITE_EVENT_ID, config.EVENTBRITE_TOKEN)
     attendees_index = AttendeesIndex(config.ATTENDEES_INDEX_CACHE)
 
     await bot.add_cog(
         AuthenticationCog(
             bot,
+            guild,
             eventbrite,
             attendees_index,
-            config.DISCORD_SERVER_ID,
             config.DISCORD_ATTENTEE_ROLE_NAME,
         )
     )

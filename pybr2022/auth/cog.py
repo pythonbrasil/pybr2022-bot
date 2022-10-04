@@ -7,6 +7,8 @@ from loguru import logger
 from .eventbrite import EventBrite
 from .index import AttendeesIndex
 
+LOGGER_CHANNEL = "logs"
+
 
 def render_template(template_path: str, **kwargs):
     with open(template_path) as fp:
@@ -18,18 +20,18 @@ class AuthenticationCog(commands.Cog):
     def __init__(
         self,
         bot: commands.Bot,
+        guild: discord.Guild,
         event_brite_client: EventBrite,
         attendees_index: AttendeesIndex,
-        server_id: str,
         attendee_role_name: str,
     ) -> None:
         self.bot = bot
         self.attendees_index = attendees_index
         self.eventbrite = event_brite_client
-        self._server_id = server_id
         self._attendee_role_name = attendee_role_name
-        self._server = None
+        self._guild = guild
         self._attendee_role = None
+        self._channels = None
         self._start_tasks()
 
     def _start_tasks(self):
@@ -42,12 +44,6 @@ class AuthenticationCog(commands.Cog):
         for attendee in new_attendees:
             self.attendees_index.add(attendee)
 
-    async def _get_server(self) -> discord.Guild:
-        if not self._server:
-            self._server = await self.bot.fetch_guild(self._server_id)
-
-        return self._server
-
     def _is_private_message(self, message: discord.Message) -> bool:
         conditions = (
             not message.author.bot,
@@ -58,16 +54,20 @@ class AuthenticationCog(commands.Cog):
     async def _get_user_from_server(
         self, user: discord.Member
     ) -> Optional[discord.Member]:
-        server = await self._get_server()
-        return await server.fetch_member(user.id)
+        return await self._guild.fetch_member(user.id)
+
+    async def _get_channel(self, name: str) -> Optional[discord.TextChannel]:
+        if not self._channels:
+            self._channels = await self._guild.fetch_channels()
+
+        return discord.utils.get(self._channels, name=name)
 
     async def _is_auth_needed(self, user: discord.Member) -> bool:
         return len(user.roles) == 1
 
     async def _get_attendee_role(self):
         if not self._attendee_role:
-            server = await self._get_server()
-            roles = await server.fetch_roles()
+            roles = await self._guild.fetch_roles()
             self._attendee_role = discord.utils.get(
                 roles, name=self._attendee_role_name
             )
@@ -77,6 +77,10 @@ class AuthenticationCog(commands.Cog):
     async def _set_attendee_role(self, member: discord.Member):
         attendee_role = await self._get_attendee_role()
         await member.add_roles(attendee_role)
+
+    async def _log_channel(self, message: str):
+        channel = await self._get_channel(LOGGER_CHANNEL)
+        await channel.send(message)
 
     async def authenticate(self, message: discord.Message):
         if not self._is_private_message(message):
@@ -111,6 +115,12 @@ class AuthenticationCog(commands.Cog):
                 previous_message=message.content,
             )
             await message.author.send(reply)
+            log_message = render_template(
+                "pybr2022/auth/templates/log_user_not_found.md",
+                user_id=message.author.id,
+                query=message.content,
+            )
+            await self._log_channel(log_message)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):

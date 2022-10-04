@@ -12,10 +12,15 @@ from pybr2022.auth.index import AttendeesIndex
 @patch("pybr2022.auth.cog.AuthenticationCog._start_tasks", Mock())
 def auth_cog(attendees_index: AttendeesIndex):
     mock_bot = AsyncMock()
+    mock_guild = AsyncMock()
     eventbrite = EventBrite("event-id", "eventbrite-api-token")
 
     return AuthenticationCog(
-        mock_bot, eventbrite, attendees_index, "server-id", "attendee-role-name"
+        mock_bot,
+        mock_guild,
+        eventbrite,
+        attendees_index,
+        "attendee-role-name",
     )
 
 
@@ -59,24 +64,6 @@ def test_message_types(type, expected, auth_cog):
 
 
 @pytest.mark.asyncio
-async def test_get_server(auth_cog):
-    expect = "guild"
-    auth_cog.bot.fetch_guild.return_value = expect
-    server = await auth_cog._get_server()
-    assert server == expect
-    auth_cog.bot.fetch_guild.assert_called_once_with(auth_cog._server_id)
-
-
-@pytest.mark.asyncio
-async def test_get_server_from_cache(auth_cog):
-    expect = "guild"
-    auth_cog._server = expect
-    server = await auth_cog._get_server()
-    assert server == expect
-    assert not auth_cog.bot.fetch_guild.called
-
-
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "member,expect",
     (
@@ -91,9 +78,7 @@ async def test_is_auth_needed(member, expect, auth_cog):
 
 @pytest.mark.asyncio
 async def test_get_attendee_role(auth_cog):
-    server = AsyncMock()
-    server.fetch_roles.return_value = [Mock(name="")]
-    auth_cog._server = server
+    auth_cog._guild.fetch_roles.return_value = [Mock(name="")]
     await auth_cog._get_attendee_role()
 
 
@@ -185,11 +170,15 @@ async def test_authenticate_attendee(
     AsyncMock(return_value=True),
 )
 @patch("pybr2022.auth.cog.AuthenticationCog._set_attendee_role")
-async def test_authenticate_not_attendee(mock_set_attendee_role, auth_cog):
+@patch("pybr2022.auth.cog.AuthenticationCog._log_channel")
+async def test_authenticate_not_attendee(
+    mock_log_channel, mock_set_attendee_role, auth_cog
+):
     message = AsyncMock(content="email")
 
     await auth_cog.authenticate(message)
     mock_set_attendee_role.assert_not_called()
+    mock_log_channel.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -202,7 +191,31 @@ async def test_on_message(mock_athenticate, auth_cog):
 
 @patch("pybr2022.auth.cog.AuthenticationCog._load_attendees")
 def test_start_tasks(mock_load_attendees):
-    cog = AuthenticationCog(
-        "bot", "eventbrite", "index", "server-id", "attendee-role-name"
-    )
+    AuthenticationCog("bot", "guild", "eventbrite", "index", "attendee-role-name")
     mock_load_attendees.start.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_log_channel(auth_cog):
+    channel = AsyncMock()
+    channel.name = "logs"
+    auth_cog._guild.fetch_channels.return_value = [channel]
+
+    message = "log"
+    await auth_cog._log_channel(message)
+
+    auth_cog._guild.fetch_channels.assert_called_once()
+    channel.send.assert_called_once_with(message)
+
+
+@pytest.mark.asyncio
+async def test_log_channel_cache(auth_cog):
+    channel = AsyncMock()
+    channel.name = "logs"
+    message = "log"
+
+    auth_cog._channels = [channel]
+    await auth_cog._log_channel(message)
+
+    auth_cog._guild.fetch_channels.assert_not_called()
+    channel.send.assert_called_once_with(message)

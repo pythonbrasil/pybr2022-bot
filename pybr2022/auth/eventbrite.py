@@ -33,7 +33,7 @@ class EventBrite:
             response.raise_for_status()
         except HTTPError:
             raise EventBriteAPIException(
-                "Error when calling EventBrite API. content={response.text!r}, url={url}, status_code={response.status_code}"
+                f"Error when calling EventBrite API. content={response.text!r}, url={url}, status_code={response.status_code}"
             )
 
         return response.json()

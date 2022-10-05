@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from discord import ChannelType
 
-from pybr2022.auth.cog import AuthenticationCog
+from pybr2022.auth.cog import AuthenticationCog, find_email
 from pybr2022.auth.eventbrite import EventBrite
 from pybr2022.auth.index import AttendeesIndex
 
@@ -170,15 +170,35 @@ async def test_authenticate_attendee(
     AsyncMock(return_value=True),
 )
 @patch("pybr2022.auth.cog.AuthenticationCog._set_attendee_role")
-@patch("pybr2022.auth.cog.AuthenticationCog._log_channel")
-async def test_authenticate_not_attendee(
-    mock_log_channel, mock_set_attendee_role, auth_cog
+@patch("pybr2022.auth.cog.AuthenticationCog._log_auth_failed")
+async def test_authenticate_missing_email(
+    mock_log_auth_failed, mock_set_attendee_role, auth_cog
 ):
-    message = AsyncMock(content="email")
+    message = AsyncMock(content="no email in message")
 
     await auth_cog.authenticate(message)
     mock_set_attendee_role.assert_not_called()
-    mock_log_channel.assert_called_once()
+    mock_log_auth_failed.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch(
+    "pybr2022.auth.cog.AuthenticationCog._is_private_message", Mock(return_value=True)
+)
+@patch(
+    "pybr2022.auth.cog.AuthenticationCog._is_auth_needed",
+    AsyncMock(return_value=True),
+)
+@patch("pybr2022.auth.cog.AuthenticationCog._set_attendee_role")
+@patch("pybr2022.auth.cog.AuthenticationCog._log_auth_failed")
+async def test_authenticate_not_attendee(
+    mock_log_auth_failed, mock_set_attendee_role, auth_cog
+):
+    message = AsyncMock(content="valid@email.com")
+
+    await auth_cog.authenticate(message)
+    mock_set_attendee_role.assert_not_called()
+    mock_log_auth_failed.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -196,26 +216,47 @@ def test_start_tasks(mock_load_attendees):
 
 
 @pytest.mark.asyncio
-async def test_log_channel(auth_cog):
+async def test_get_channel(auth_cog):
     channel = AsyncMock()
     channel.name = "logs"
     auth_cog._guild.fetch_channels.return_value = [channel]
 
     message = "log"
-    await auth_cog._log_channel(message)
+    await auth_cog._get_channel(message)
 
     auth_cog._guild.fetch_channels.assert_called_once()
-    channel.send.assert_called_once_with(message)
 
 
 @pytest.mark.asyncio
-async def test_log_channel_cache(auth_cog):
+async def test_get_channel_cache(auth_cog):
     channel = AsyncMock()
     channel.name = "logs"
     message = "log"
 
     auth_cog._channels = [channel]
-    await auth_cog._log_channel(message)
+    await auth_cog._get_channel(message)
 
     auth_cog._guild.fetch_channels.assert_not_called()
-    channel.send.assert_called_once_with(message)
+
+
+@pytest.mark.parametrize(
+    "message, email",
+    (
+        ("oi tudo bem meu email é j@gmail.com", "j@gmail.com"),
+        ("texto antes j@gmail.com texto depois", "j@gmail.com"),
+        ("texto sem email", None),
+    ),
+)
+def test_find_email(message, email):
+    assert find_email(message) == email
+
+
+@pytest.mark.asyncio
+@patch("pybr2022.auth.cog.AuthenticationCog._get_channel")
+async def test_log_auth_failed(mock_get_channel, auth_cog):
+    message = AsyncMock()
+    channel = AsyncMock()
+    mock_get_channel.return_value = channel
+
+    await auth_cog._log_auth_failed(message)
+    channel.send.assert_called_once()

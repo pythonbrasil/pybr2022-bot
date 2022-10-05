@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 
 import discord
@@ -8,12 +9,20 @@ from .eventbrite import EventBrite
 from .index import AttendeesIndex
 
 LOGGER_CHANNEL = "logs"
+EMAIL_REGEX = re.compile(r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)")
 
 
 def render_template(template_path: str, **kwargs):
     with open(template_path) as fp:
         text = fp.read().format(**kwargs)
         return text
+
+
+def find_email(message: str):
+    result = EMAIL_REGEX.search(message)
+    if result:
+        return result.group()
+    return None
 
 
 class AuthenticationCog(commands.Cog):
@@ -78,9 +87,14 @@ class AuthenticationCog(commands.Cog):
         attendee_role = await self._get_attendee_role()
         await member.add_roles(attendee_role)
 
-    async def _log_channel(self, message: str):
+    async def _log_auth_failed(self, message: discord.Message):
+        log_message = render_template(
+            "pybr2022/auth/templates/log_user_not_found.md",
+            user_id=message.author.id,
+            query=message.content,
+        )
         channel = await self._get_channel(LOGGER_CHANNEL)
-        await channel.send(message)
+        await channel.send(log_message)
 
     async def authenticate(self, message: discord.Message):
         if not self._is_private_message(message):
@@ -88,7 +102,11 @@ class AuthenticationCog(commands.Cog):
 
         user = await self._get_user_from_server(message.author)
         if not user:
-            await message.author.send("join server first")
+            reply = render_template(
+                "pybr2022/auth/templates/user_not_in_server.md",
+                user_id=message.author.id,
+            )
+            await message.author.send(reply)
             return
 
         if not await self._is_auth_needed(user):
@@ -99,7 +117,20 @@ class AuthenticationCog(commands.Cog):
             await message.author.send(reply)
             return
 
-        if self.attendees_index.search(message.content):
+        email = find_email(message.content)
+        if not email:
+            logger.warning(
+                f"Email not found in message. author={message.author!r}, message={message.content!r}"
+            )
+            reply = render_template(
+                "pybr2022/auth/templates/email_missing.md",
+                user_id=message.author.id,
+            )
+            await message.author.send(reply)
+            await self._log_auth_failed(message)
+            return
+
+        if self.attendees_index.search(email):
             logger.info(
                 f"User authenticated. author={message.author!r}, message={message.content!r}"
             )
@@ -115,12 +146,7 @@ class AuthenticationCog(commands.Cog):
                 previous_message=message.content,
             )
             await message.author.send(reply)
-            log_message = render_template(
-                "pybr2022/auth/templates/log_user_not_found.md",
-                user_id=message.author.id,
-                query=message.content,
-            )
-            await self._log_channel(log_message)
+            await self._log_auth_failed(message)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):

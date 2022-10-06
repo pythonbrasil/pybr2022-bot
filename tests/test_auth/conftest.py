@@ -16,4 +16,4 @@ def attendee():
 def attendees_index():
     with TemporaryDirectory() as dir:
         cache_file = Path(dir) / "cache.json"
-        yield AttendeesIndex(cache_file)
+        yield AttendeesIndex(cache_file, True)

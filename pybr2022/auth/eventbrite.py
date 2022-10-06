@@ -4,10 +4,13 @@ from base64 import b64encode
 from datetime import datetime
 from typing import Optional
 
-from httpx import AsyncClient, HTTPError
+from httpx import AsyncClient, HTTPError, ReadTimeout
 from loguru import logger
 
 from .models import Attendee
+
+api_calls_limit = asyncio.Semaphore(5)
+MAX_API_CALL_RETRIES = 3
 
 
 class EventBriteAPIException(Exception):
@@ -27,15 +30,27 @@ class EventBrite:
     def _build_attendees_endpoint(self) -> str:
         return f"{self.BASE_URL}/events/{self.event_id}/attendees/"
 
-    async def _request(self, client: AsyncClient, url: str, params: dict) -> dict:
-        try:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-        except HTTPError:
-            raise EventBriteAPIException(
-                f"Error when calling EventBrite API. content={response.text!r}, url={url}, status_code={response.status_code}"
-            )
-
+    async def _request(
+        self,
+        client: AsyncClient,
+        url: str,
+        params: dict,
+        retries: int = MAX_API_CALL_RETRIES,
+    ) -> dict:
+        async with api_calls_limit:
+            try:
+                response = await client.get(url, params=params)
+            except ReadTimeout:
+                if retries > 1:
+                    seconds = (MAX_API_CALL_RETRIES - retries + 1) * 2
+                    await asyncio.sleep(seconds)
+                    return await self._request(client, url, params, retries - 1)
+            try:
+                response.raise_for_status()
+            except HTTPError:
+                raise EventBriteAPIException(
+                    f"Error when calling EventBrite API. content={response.text!r}, url={url}, status_code={response.status_code}"
+                )
         return response.json()
 
     async def _list_attendees(self, client: AsyncClient, params: dict) -> dict:

@@ -33,7 +33,7 @@ def test_load_cache(tmp_path, attendee):
     with cache_file.open("w") as fp:
         json.dump(cache, fp)
 
-    index = AttendeesIndex(cache_file)
+    index = AttendeesIndex(cache_file, True)
     assert index.updated_at == now
     assert index.search(attendee.order_id).__dict__ == attendee.__dict__
     assert index.search(attendee.email).__dict__ == attendee.__dict__

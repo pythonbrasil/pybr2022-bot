@@ -11,7 +11,9 @@ async def setup(bot: Bot):
     guild = await bot.fetch_guild(config.DISCORD_SERVER_ID)
 
     eventbrite = EventBrite(config.EVENTBRITE_EVENT_ID, config.EVENTBRITE_TOKEN)
-    attendees_index = AttendeesIndex(config.ATTENDEES_INDEX_CACHE)
+    attendees_index = AttendeesIndex(
+        config.ATTENDEES_CACHE_PATH, config.ATTENDEES_CACHE_ENABLED
+    )
 
     await bot.add_cog(
         AuthenticationCog(

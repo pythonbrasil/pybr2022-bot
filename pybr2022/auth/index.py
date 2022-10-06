@@ -15,12 +15,19 @@ class AttendeesJSONEncoder(json.JSONEncoder):
 
 
 class AttendeesIndex:
-    def __init__(self, index_path: Path):
+    def __init__(self, index_path: Path, cache_enabled: bool = False):
         self._index_path = index_path
+        self._cache_enabled = cache_enabled
         self._index, self.updated_at = self._load_cache()
 
     def _load_cache(self):
-        if not self._index_path.exists() or not self._index_path.is_file():
+        if not all(
+            [
+                self._cache_enabled,
+                self._index_path.exists(),
+                self._index_path.is_file(),
+            ]
+        ):
             return {}, None
 
         with self._index_path.open() as fp:
@@ -32,6 +39,9 @@ class AttendeesIndex:
             return index, updated_at
 
     def _store_cache(self):
+        if not self._cache_enabled:
+            return
+
         with self._index_path.open(mode="w") as fp:
             cache = {
                 "updated_at": self.updated_at.isoformat(),

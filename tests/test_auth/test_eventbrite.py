@@ -79,9 +79,8 @@ def test_prepare_list_attendees_all_pages():
 
 @pytest.mark.asyncio
 async def test_list_attendees_exception(httpx_mock):
-    httpx_mock.add_exception(
-        httpx.TooManyRedirects("Hourly rate limit has been reached for this token")
-    )
+    httpx_mock.add_response(status_code=429)
+
     eventbrite = EventBrite("event-id", "api-token")
     with pytest.raises(EventBriteAPIException):
         await eventbrite.list_attendees()

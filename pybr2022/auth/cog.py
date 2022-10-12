@@ -12,12 +12,6 @@ LOGGER_CHANNEL = "logs"
 EMAIL_REGEX = re.compile(r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)")
 
 
-def render_template(template_path: str, **kwargs):
-    with open(template_path) as fp:
-        text = fp.read().format(**kwargs)
-        return text
-
-
 def find_email(message: str):
     result = EMAIL_REGEX.search(message)
     if result:
@@ -117,7 +111,7 @@ class AuthenticationCog(commands.Cog):
             await message.author.send(reply)
             return
 
-        email = find_email(message.content)
+        email = find_email(message.content.lower())
         if not email:
             logger.warning(
                 f"Email not found in message. author={message.author!r}, message={message.content!r}"
@@ -160,6 +154,7 @@ class AuthenticationCog(commands.Cog):
         email: str,
         *args,
     ):
+        email = email.lower()
         if self.attendees_index.search(email):
             await context.reply(f"Email `{email}` encontrado no Eventbrite")
         else:
@@ -175,5 +170,5 @@ class AuthenticationCog(commands.Cog):
         await context.reply(
             "Index:\n"
             f"- Size: `{len(self.attendees_index._index)}`\n"
-            f"- Updated at: `{len(self.attendees_index.updated_at)}`"
+            f"- Updated at: `{self.attendees_index.updated_at}`"
         )

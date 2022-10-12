@@ -1,7 +1,8 @@
-from typing import Optional
+from typing import Optional, Union
 
 import discord
 from discord.ext import commands
+from loguru import logger
 
 from pybr2022.utils import render_template
 
@@ -32,3 +33,19 @@ class MessagesCog(commands.Cog):
         )
         channel = await self._get_channel(self._welcome_channel)
         await channel.send(message, suppress_embeds=True)
+
+    @commands.command("msg")
+    @commands.has_permissions(manage_guild=True)
+    async def send(
+        self,
+        context: commands.Context,
+        destination: Union[discord.TextChannel, discord.Member],
+        *args,
+    ):
+        if not args:
+            logger.warning("message is missing")
+            return
+
+        message = " ".join(args)
+        logger.info(f"message sent. destination={destination}, message={message}")
+        await destination.send(message)

@@ -151,3 +151,16 @@ class AuthenticationCog(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         await self.authenticate(message)
+
+    @commands.command()
+    @commands.has_permissions(manage_guild=True)
+    async def checkuser(
+        self,
+        context: commands.Context,
+        email: str,
+        *args,
+    ):
+        if self.attendees_index.search(email):
+            await context.reply(f"Email `{email}` encontrado no Eventbrite")
+        else:
+            await context.reply(f"Email `{email}` **não** encontrado no Eventbrite")

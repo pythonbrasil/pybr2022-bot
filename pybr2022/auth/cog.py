@@ -164,3 +164,16 @@ class AuthenticationCog(commands.Cog):
             await context.reply(f"Email `{email}` encontrado no Eventbrite")
         else:
             await context.reply(f"Email `{email}` **não** encontrado no Eventbrite")
+
+    @commands.command("authinfo")
+    @commands.has_permissions(manage_guild=True)
+    async def info(
+        self,
+        context: commands.Context,
+        *args,
+    ):
+        await context.reply(
+            "Index:\n"
+            f"- Size: `{len(self.attendees_index._index)}`\n"
+            f"- Updated at: `{len(self.attendees_index.updated_at)}`"
+        )

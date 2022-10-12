@@ -5,16 +5,25 @@ from pybr2022 import config
 from pybr2022.auth.cog import AuthenticationCog
 from pybr2022.auth.eventbrite import EventBrite
 from pybr2022.auth.index import AttendeesIndex
+from pybr2022.messages.cog import MessagesCog
 
 
 async def setup(bot: Bot):
+    logger.info("Getting Discord server")
     guild = await bot.fetch_guild(config.DISCORD_SERVER_ID)
 
+    logger.info("Setup EventBrite")
     eventbrite = EventBrite(config.EVENTBRITE_EVENT_ID, config.EVENTBRITE_TOKEN)
+
+    logger.info("Setup AttendeesIndex")
     attendees_index = AttendeesIndex(
         config.ATTENDEES_CACHE_PATH, config.ATTENDEES_CACHE_ENABLED
     )
 
+    logger.info("Setup MessageCog")
+    await bot.add_cog(MessagesCog(bot, guild, config.DISCORD_WELCOME_CHANNEL))
+
+    logger.info("Setup AuthenticationCog")
     await bot.add_cog(
         AuthenticationCog(
             bot,

@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands, tasks
 from loguru import logger
 
+from pybr2022.utils import render_template
 from .eventbrite import EventBrite
 from .index import AttendeesIndex
 
@@ -146,7 +147,7 @@ class AuthenticationCog(commands.Cog):
     async def on_message(self, message: discord.Message):
         await self.authenticate(message)
 
-    @commands.command()
+    @commands.command("verificar_participante")
     @commands.has_permissions(manage_guild=True)
     async def checkuser(
         self,
@@ -156,11 +157,11 @@ class AuthenticationCog(commands.Cog):
     ):
         email = email.lower()
         if self.attendees_index.search(email):
-            await context.reply(f"Email `{email}` encontrado no Eventbrite")
+            await context.reply(f"✅ Email `{email}` encontrado no Eventbrite")
         else:
-            await context.reply(f"Email `{email}` **não** encontrado no Eventbrite")
+            await context.reply(f"❌ Email `{email}` **não** encontrado no Eventbrite")
 
-    @commands.command("authinfo")
+    @commands.command("eventbrite")
     @commands.has_permissions(manage_guild=True)
     async def info(
         self,
@@ -168,7 +169,23 @@ class AuthenticationCog(commands.Cog):
         *args,
     ):
         await context.reply(
-            "Index:\n"
-            f"- Size: `{len(self.attendees_index._index)}`\n"
+            "Eventbrite Index:\n"
+            f"- Size: `{len(self.attendees_index._index)/2}`\n"
             f"- Updated at: `{self.attendees_index.updated_at}`"
+        )
+
+    @commands.command("credenciamento")
+    @commands.has_permissions(manage_guild=True)
+    async def missing_authentication(
+        self,
+        context: commands.Context,
+        *args,
+    ):
+        members_missing_auth = []
+        async for member in context.guild.fetch_members(limit=None):
+            if len(member.roles) == 1:
+                members_missing_auth.append(member)
+
+        await context.reply(
+            f"Pessoas não credenciadas: {len(members_missing_auth)}"
         )

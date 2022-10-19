@@ -39,12 +39,14 @@ class EventBrite:
     ) -> dict:
         async with api_calls_limit:
             try:
-                response = await client.get(url, params=params)
+                response = await client.get(url, params=params, timeout=10)
             except ReadTimeout:
                 if retries > 1:
                     seconds = (MAX_API_CALL_RETRIES - retries + 1) * 2
                     await asyncio.sleep(seconds)
                     return await self._request(client, url, params, retries - 1)
+                else:
+                    raise
             try:
                 response.raise_for_status()
             except HTTPError:

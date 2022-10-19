@@ -43,10 +43,13 @@ class AuthenticationCog(commands.Cog):
 
     @tasks.loop(minutes=5)
     async def _load_attendees(self):
-        last_update = self.attendees_index.updated_at
-        new_attendees = await self.eventbrite.list_attendees(last_update)
-        for attendee in new_attendees:
-            self.attendees_index.add(attendee)
+        try:
+            last_update = self.attendees_index.updated_at
+            new_attendees = await self.eventbrite.list_attendees(last_update)
+            for attendee in new_attendees:
+                self.attendees_index.add(attendee)
+        except Exception:
+            logger.exception("Error while loading attendees from EventBrite")
 
     def _is_private_message(self, message: discord.Message) -> bool:
         conditions = (
@@ -170,7 +173,7 @@ class AuthenticationCog(commands.Cog):
     ):
         await context.reply(
             "Eventbrite Index:\n"
-            f"- Size: `{len(self.attendees_index._index)/2}`\n"
+            f"- Size: `{len(self.attendees_index._index)}`\n"
             f"- Updated at: `{self.attendees_index.updated_at}`"
         )
 

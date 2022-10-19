@@ -50,7 +50,6 @@ class AttendeesIndex:
             json.dump(cache, fp, cls=AttendeesJSONEncoder)
 
     def add(self, attendee: Attendee) -> None:
-        self._index[attendee.order_id.lower()] = attendee
         self._index[attendee.email.lower()] = attendee
         self.updated_at = datetime.utcnow()
         self._store_cache()

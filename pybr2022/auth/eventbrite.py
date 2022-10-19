@@ -60,9 +60,11 @@ class EventBrite:
         url = self._build_attendees_endpoint()
         response = await self._request(client, url, params)
         logger.info(
-            "List attendees request. attendees={attendees}, page_number={page_number}".format(
+            "List attendees request. attendees={attendees}, page_number={page_number}, page_count={page_count}, has_more_items={has_more_items}".format(
                 attendees=len(response["attendees"]),
                 page_number=response["pagination"]["page_number"],
+                page_count=response["pagination"]["page_count"],
+                has_more_items=response["pagination"]["has_more_items"],
             )
         )
         return response

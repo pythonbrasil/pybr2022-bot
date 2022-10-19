@@ -192,3 +192,12 @@ class AuthenticationCog(commands.Cog):
         await context.reply(
             f"Pessoas não credenciadas: {len(members_missing_auth)}"
         )
+
+    @commands.command("loadeventbrite")
+    @commands.has_permissions(manage_guild=True)
+    async def load_eventbrite(
+        self,
+        context: commands.Context,
+        *args,
+    ):
+        await self._load_attendees()

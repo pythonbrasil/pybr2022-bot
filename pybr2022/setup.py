@@ -6,6 +6,8 @@ from pybr2022.auth.cog import AuthenticationCog
 from pybr2022.auth.eventbrite import EventBrite
 from pybr2022.auth.index import AttendeesIndex
 from pybr2022.messages.cog import MessagesCog
+from pybr2022.talks.pretalx import Pretalx
+from pybr2022.talks.cog import TalksCog
 
 
 async def setup(bot: Bot):
@@ -19,6 +21,10 @@ async def setup(bot: Bot):
     attendees_index = AttendeesIndex(
         config.ATTENDEES_CACHE_PATH, config.ATTENDEES_CACHE_ENABLED
     )
+
+    logger.info("Setup TalksCog")
+    pretalx = Pretalx(config.PRETALX_EVENT_SLUT, config.PRETALX_TOKEN)
+    await bot.add_cog(TalksCog(bot, guild, pretalx))
 
     logger.info("Setup MessageCog")
     await bot.add_cog(MessagesCog(bot, guild, config.DISCORD_WELCOME_CHANNEL))
